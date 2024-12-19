@@ -5,18 +5,15 @@ const API_TOKEN = "api";
 const version = "v0";
 const defaultPath = `/${API_TOKEN}/${version}/precipitation`;
 
-function buildEndpoint(endpoint: String): String {
+function buildEndpoint(endpoint: string): string {
     return defaultPath + endpoint;
 }
-
-
-
 
 const router = express.Router();
 
 
-router.route(LATEST_X_VALUES)
+router.route(buildEndpoint(LATEST_X_VALUES))
     .get(getLatestX);
 
-router.route(POST_DATA)
+router.route(buildEndpoint(ADD_DATA))
     .post(postNewData);
