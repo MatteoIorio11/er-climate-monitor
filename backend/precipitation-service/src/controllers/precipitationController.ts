@@ -1,4 +1,8 @@
 import { precipitationModel } from "../models/precipitationModel"
-module.exports.get = (request, response) => {
-    precipitationModel.find()
+import {Request, Response } from "express"
+
+const getLatestX = (request: Request, response: Response) => {
+    response.send()
 }
+
+export { getLatestX }
