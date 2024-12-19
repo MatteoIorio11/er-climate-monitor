@@ -1,13 +1,22 @@
 import express from "express";
-import { getLatestX } from "../controllers/precipitationController";
+import { getLatestX, postNewData } from "../controllers/precipitationController";
+
 const API_TOKEN = "api";
 const version = "v0";
-const defaultPath = `/${API_TOKEN}/${version}`;
-const LATEST_VALUES = `/${defaultPath}/get-latest`
-const LATEST_X_VALUES = `/${LATEST_VALUES}/:x`
+const defaultPath = `/${API_TOKEN}/${version}/precipitation`;
+
+function buildEndpoint(endpoint: String): String {
+    return defaultPath + endpoint;
+}
+
+
 
 
 const router = express.Router();
 
+
 router.route(LATEST_X_VALUES)
-    .get(getLatestX)
+    .get(getLatestX);
+
+router.route(POST_DATA)
+    .post(postNewData);
