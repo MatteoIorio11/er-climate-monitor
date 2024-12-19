@@ -13,4 +13,4 @@ const postNewData = (request: Request, response: Response) => {
     response.send(201);
 }
 
-export { getLatestX }
+export { getLatestX, postNewData }
