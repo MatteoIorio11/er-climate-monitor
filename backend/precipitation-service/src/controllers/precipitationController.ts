@@ -5,4 +5,8 @@ const getLatestX = (request: Request, response: Response) => {
     response.send()
 }
 
+const postNewData = (request: Request, response: Response) => {
+    response.send()
+}
+
 export { getLatestX }
