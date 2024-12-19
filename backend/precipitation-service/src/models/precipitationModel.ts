@@ -6,4 +6,4 @@ const precipitationScheme = new mongoose.Schema({
     value: String
 });
 const precipitationModel = mongoose.model("Precipitations", precipitationScheme);
-module.exports = { precipitationModel }
+export { precipitationModel }
