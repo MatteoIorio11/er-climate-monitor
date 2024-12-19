@@ -1,1 +1,1 @@
-const POST_DATA = "/add"
+const ADD_DATA = "/add"
