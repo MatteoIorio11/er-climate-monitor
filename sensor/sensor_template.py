@@ -1,8 +1,10 @@
 import requests
 import datetime
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, status
+from collections import defaultdict
 import uvicorn
 from apscheduler.schedulers.background import BackgroundScheduler
+import json
 
 
 
@@ -27,7 +29,6 @@ MONDAY, SUNDAY = 0, 6
 MIN_HOUR, MAX_HOUR, MIN_MINUTE, MAX_MINUTE = 0, 23, 0, 59
 
 data_endpoint_url = "{{ SENSOR_INFORMATION_ENDPOINT }}"
-HTTP_OK = 200
 
 app = FastAPI()
 scheduler = BackgroundScheduler()
@@ -41,10 +42,10 @@ def clear_data(input_json_data: dict):
 def sense_data():
     log("Sensing the data")
     response = requests.get(data_endpoint_url)
-    if response.status_code == HTTP_OK:
+    if response.status_code == status.HTTP_200_OK:
         return clear_data(response.json())
     else:
-        raise ValueError(f"The Status code is different from {HTTP_OK}, something went wrong.")
+        raise ValueError(f"The Status code is different from {status.HTTP_200_OK}, something went wrong.")
 
 def send_data_to_endpoint():
     try:
@@ -67,29 +68,52 @@ def config_scheduler():
             )
     log(f"New Cron task configured")
     scheduler.start()
-    
+
 
 @app.put("/sensor/update/{new_name}")
-def update_sensor_name(new_name: str = name):
+def update_sensor_name(response: Response, new_name: str = name) -> Response:
     log("Received a request to update the Sensor's name")
-    name = new_name
+    if new_name:
+        global name
+        name = new_name
+        return Response()
+    else:
+        return Response(status_code=status.HTTP_406_NOT_ACCEPTABLE, content="Error: The input name can not be None")
+    
 
-@app.put("/sensor/configuration/days")
-def update_sensor_date(from_day: int = MONDAY, to_date: int = SUNDAY):
+@app.put("/sensor/configuration/cron/days")
+def update_sensor_date(response: Response, from_day: int = MONDAY, to_date: int = SUNDAY) -> Response:
     if MONDAY <= from_day <= to_date and to_date <= SUNDAY:
         log("Received a request to update the Sensor's days of work")
         config_scheduler()
+        return Response()
+    else:
+        return Response(status_code=status.HTTP_406_NOT_ACCEPTABLE, content="Error: The input days must be in [0, 6]")
 
-@app.put("/sensor/configuration/time")
-def update_sensor_time(hour: int = MIN_HOUR, minute: int = MIN_MINUTE):
+@app.put("/sensor/configuration/cron/time")
+def update_sensor_time(response: Response, hour: int = MIN_HOUR, minute: int = MIN_MINUTE) -> Response:
     if MIN_HOUR <= hour <= MAX_HOUR and MIN_MINUTE <= minute <= MAX_MINUTE:
         log("Received a new request to update the Sensor's time of work")
         config_scheduler()
+        response = Response()
+    else:
+        response = Response(status_code=status.HTTP_406_NOT_ACCEPTABLE, content="Error: The input hours must be in [0, 23] and minutes in [0, 59]")
+    return response
+
 @app.get("/health")
-def health():
+def health(response: Response) -> Response:
     log("Server pinged")
-    return Response(content="Everything is OK")
+    return Response(content="Everything is OK.")
+
+@app.get("/info")
+def info(response: Response) -> Response:
+    log("Returning Sensor information")
+    message: dict[str, list] = defaultdict(list)
+    message["General Sensor Information"].append({"Endpoint Information" : endpoint_information})
+    message["General Sensor Information"].append({"Cronjob Information": cron_info})
+    return Response(content=json.dumps(message))
+    
 
 if __name__ == "__main__":
     config_scheduler()
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="localhost", port=port)
