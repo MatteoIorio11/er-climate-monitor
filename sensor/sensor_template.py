@@ -41,7 +41,7 @@ def clear_data(input_json_data: dict):
 
 def sense_data():
     log("Sensing the data")
-    response = requests.get(data_endpoint_url)
+    response: Response = requests.get(data_endpoint_url)
     if response.status_code == status.HTTP_200_OK:
         return clear_data(response.json())
     else:
@@ -56,7 +56,7 @@ def send_data_to_endpoint():
     except (ValueError, requests.exceptions.JSONDecodeError) as error:
         log(f"An error occurred -> {repr(error)}")
 
-def config_scheduler():
+def config_scheduler() -> None:
     log(f"Configuring the scheduler with the following infomrations: Day: {cron_info["day_of_the_week"]}, Hour: {cron_info["hour"]}, Minute: {cron_info["minute"]}")
     if scheduler.running:
         scheduler.shutdown()
@@ -70,12 +70,12 @@ def config_scheduler():
     scheduler.start()
 
 
-@app.put("/sensor/update/{new_name}")
+@app.put("/sensor/update/name/{new_name}")
 def update_sensor_name(response: Response, new_name: str = name) -> Response:
     log("Received a request to update the Sensor's name")
     if new_name:
         global name
-        name = new_name
+        name = new_name.replace(" ", "")
         return Response()
     else:
         return Response(status_code=status.HTTP_406_NOT_ACCEPTABLE, content="Error: The input name can not be None")
@@ -109,6 +109,7 @@ def health(response: Response) -> Response:
 def info(response: Response) -> Response:
     log("Returning Sensor information")
     message: dict[str, list] = defaultdict(list)
+    message["General Sensor Information"].append({"Sensor Name" : name})
     message["General Sensor Information"].append({"Endpoint Information" : endpoint_information})
     message["General Sensor Information"].append({"Cronjob Information": cron_info})
     return Response(content=json.dumps(message))
